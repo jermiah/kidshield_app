@@ -117,8 +117,11 @@ async def check_content(request: GuardianRequest):
     - Returns APIResponse with analysis results
     """
     try:
+        print("----------------------------------------------------------------")
+        print("Received request:", request)
         # Validate input
         if not request.text and not request.image:
+            print("Neither text nor image provided", request)   
             raise HTTPException(
                 status_code=400, 
                 detail="Either text or image content must be provided"
@@ -360,6 +363,8 @@ async def auto_analyze_content(request: SimpleRequest):
     Détecte automatiquement si c'est du texte ou une image base64
     """
     try:
+        print("----------------------------------------------------------------")
+        print(request)
         logger.info("Auto-analyzing content")
         
         # Détection automatique du type de contenu
@@ -367,6 +372,7 @@ async def auto_analyze_content(request: SimpleRequest):
         
         if content_type == "text":
             result = await analyze_text_simple(request.content, request.user_id)
+            print("result", result)
             message = "Text analysis completed (auto-detected)"
         elif content_type == "image":
             result = await analyze_image_simple(request.content, request.user_id)

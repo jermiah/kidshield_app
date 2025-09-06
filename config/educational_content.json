@@ -1,0 +1,122 @@
+{
+  "safety_tips": {
+    "young_child": {
+      "bullying": "If someone is being mean to you online, tell a grown-up you trust right away. It's not your fault.",
+      "stranger_contact": "Never talk to people you don't know online, and never share your real name, address, or school.",
+      "inappropriate_request": "If someone asks you to do something that feels wrong or scary, say no and tell a parent.",
+      "general": "Always ask a grown-up before clicking on links or downloading anything."
+    },
+    "pre_teen": {
+      "bullying": "Cyberbullying is never okay. Block the person, save evidence, and tell a trusted adult.",
+      "stranger_contact": "Be careful about who you talk to online. Real friends don't ask for personal information right away.",
+      "inappropriate_request": "Trust your instincts. If something feels wrong, it probably is. Talk to a parent or counselor.",
+      "general": "Think before you post or share anything online. Once it's online, it can be there forever."
+    },
+    "teenager": {
+      "bullying": "Document cyberbullying incidents and report them. You have the right to feel safe online.",
+      "stranger_contact": "Be skeptical of online relationships. People aren't always who they claim to be.",
+      "inappropriate_request": "You have the right to say no to any request that makes you uncomfortable, online or offline.",
+      "general": "Protect your digital reputation. What you post now can affect your future opportunities."
+    }
+  },
+  "educational_modules": {
+    "digital_citizenship": {
+      "title": "Being a Good Digital Citizen",
+      "age_groups": ["pre_teen", "teenager"],
+      "topics": [
+        "Respecting others online",
+        "Understanding digital footprints",
+        "Recognizing and avoiding scams",
+        "Protecting personal information"
+      ]
+    },
+    "online_safety_basics": {
+      "title": "Staying Safe Online",
+      "age_groups": ["young_child", "pre_teen"],
+      "topics": [
+        "Identifying trusted adults",
+        "Understanding stranger danger online",
+        "Safe sharing practices",
+        "What to do when something feels wrong"
+      ]
+    },
+    "cyberbullying_prevention": {
+      "title": "Understanding and Preventing Cyberbullying",
+      "age_groups": ["pre_teen", "teenager"],
+      "topics": [
+        "Recognizing cyberbullying",
+        "Bystander intervention",
+        "Reporting mechanisms",
+        "Building resilience"
+      ]
+    }
+  },
+  "parent_guidance": {
+    "communication_strategies": {
+      "young_child": [
+        "Use simple, clear language about online safety",
+        "Create regular check-ins about online activities",
+        "Establish clear rules about internet use",
+        "Be available and approachable for questions"
+      ],
+      "pre_teen": [
+        "Have open conversations about online experiences",
+        "Discuss the permanence of digital content",
+        "Set clear boundaries and consequences",
+        "Monitor online activities while respecting growing independence"
+      ],
+      "teenager": [
+        "Respect their growing autonomy while maintaining safety",
+        "Discuss real-world consequences of online actions",
+        "Encourage critical thinking about online content",
+        "Be a resource rather than a monitor"
+      ]
+    },
+    "warning_signs": [
+      "Sudden changes in online behavior",
+      "Secretiveness about online activities",
+      "Emotional distress after using devices",
+      "Withdrawal from family and friends",
+      "Unexplained gifts or money",
+      "Use of new communication platforms"
+    ]
+  },
+  "crisis_resources": {
+    "immediate_help": [
+      {
+        "name": "National Child Abuse Hotline",
+        "phone": "1-800-4-A-CHILD (1-800-422-4453)",
+        "available": "24/7"
+      },
+      {
+        "name": "Crisis Text Line",
+        "contact": "Text HOME to 741741",
+        "available": "24/7"
+      }
+    ],
+    "cyberbullying_support": [
+      {
+        "name": "StopBullying.gov",
+        "url": "https://www.stopbullying.gov/cyberbullying",
+        "description": "Federal resources on cyberbullying prevention and response"
+      },
+      {
+        "name": "Cyberbullying Research Center",
+        "url": "https://cyberbullying.org",
+        "description": "Research-based information and resources"
+      }
+    ],
+    "online_safety_organizations": [
+      {
+        "name": "National Center for Missing & Exploited Children",
+        "url": "https://www.missingkids.org/gethelpnow/cybertipline",
+        "description": "Report online exploitation and get safety resources"
+      },
+      {
+        "name": "ConnectSafely",
+        "url": "https://www.connectsafely.org",
+        "description": "Tips and advice for safe and secure online experiences"
+      }
+    ]
+  }
+}

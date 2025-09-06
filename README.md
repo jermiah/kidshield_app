@@ -1,1 +1,333 @@
-# kidshield_app
+# AI Agent System for Suspicious Message Management
+
+A comprehensive system of AI agents designed to handle suspicious messages that have been pre-classified by detection systems. The agents make intelligent decisions about appropriate actions and manage all related communications with parents, children, and potentially the senders.
+
+## 🎯 Overview
+
+This system receives incoming messages that have already been classified as suspicious and focuses on:
+
+- **AI-Enhanced Decision-Making**: Using BlackBox LLM for intelligent context analysis and reasoning
+- **Personalized Communication**: Generating tailored, age-appropriate messages for all stakeholders
+- **Educational Support**: Providing contextual safety resources and guidance
+- **Action Coordination**: Managing all aspects of the response process with AI assistance
+
+## 🤖 LLM Integration
+
+The system integrates with **BlackBox AI** to provide enhanced capabilities:
+
+- **Enhanced Decision Reasoning**: AI-generated explanations for all decisions
+- **Personalized Communications**: Context-aware messages for parents, children, and senders
+- **Age-Appropriate Content**: Automatically adapted messaging based on child's age and situation
+- **Fallback Safety**: Graceful degradation to template-based responses if LLM is unavailable
+
+## 🏗️ System Architecture
+
+### Core Components
+
+1. **Message Processor** - Handles incoming suspicious messages with metadata
+2. **Decision Engine** - Analyzes context and selects appropriate actions
+3. **Communication Generator** - Creates tailored messages for different stakeholders
+4. **Action Manager** - Coordinates and executes chosen actions
+5. **Educational Content Library** - Age-appropriate safety resources
+6. **Logging & Audit System** - Tracks decisions and actions for transparency
+
+### Key Features
+
+- ✅ Multi-stakeholder communication (parents, children, senders)
+- ✅ Age-appropriate content generation
+- ✅ Severity assessment algorithms
+- ✅ Educational resource matching
+- ✅ Action justification and audit trails
+- ✅ Configurable response templates
+- ✅ Comprehensive logging and monitoring
+
+## 📁 Project Structure
+
+```
+ai_agent_system/
+├── src/
+│   ├── models/           # Data models for messages and actions
+│   ├── agents/           # Main AI agent implementation
+│   ├── decision_engine/  # Decision-making logic
+│   ├── communication/    # Message generation
+│   └── utils/           # Utilities and logging
+├── config/              # Configuration files
+├── data/               # Sample data and test cases
+├── tests/              # Unit tests
+├── examples/           # Usage examples
+└── README.md
+```
+
+## 🚀 Quick Start
+
+### Prerequisites
+
+- Python 3.8+
+- BlackBox AI API key
+- Required packages (see requirements.txt)
+
+### Installation
+
+1. Clone the repository:
+```bash
+git clone <repository-url>
+cd ai_agent_system
+```
+
+2. Install dependencies:
+```bash
+pip install -r requirements.txt
+```
+
+3. Set up your BlackBox API key:
+```bash
+# Create .env file with your API key
+echo "BLACKBOX_API_KEY=your_api_key_here" > .env
+```
+
+4. Run the basic example:
+```bash
+python examples/basic_usage.py
+```
+
+5. Test LLM integration:
+```bash
+python examples/llm_enhanced_usage.py
+```
+
+### Basic Usage
+
+```python
+from src.agents.ai_agent import AIAgent
+from src.models.message import SuspiciousMessage, ChildProfile, MessageMetadata, ThreatType, SeverityLevel
+
+# Initialize the AI agent with LLM enhancement
+agent = AIAgent(use_llm=True)
+
+# Create a suspicious message (normally received from detection system)
+message = SuspiciousMessage(
+    message_id="msg_001",
+    content="Suspicious content here",
+    threat_type=ThreatType.BULLYING,
+    severity=SeverityLevel.HIGH,
+    child_profile=child_profile,
+    metadata=metadata
+)
+
+# Process the message
+action_plan = agent.process_suspicious_message(message)
+
+# Review the action plan with AI-enhanced reasoning
+print(f"Generated {len(action_plan.decisions)} decisions")
+print(f"Created {len(action_plan.communications)} communications")
+
+# View enhanced reasoning
+for decision in action_plan.decisions:
+    print(f"Action: {decision.action_type.value}")
+    print(f"AI Reasoning: {decision.reasoning}")
+```
+
+### LLM Configuration
+
+The system can be configured to use or disable LLM features:
+
+```python
+# Enable LLM (default)
+agent = AIAgent(use_llm=True)
+
+# Disable LLM (use templates only)
+agent = AIAgent(use_llm=False)
+
+# Configure via config file
+config = {
+    "llm": {
+        "enabled": True,
+        "fallback_to_templates": True,
+        "temperature": {
+            "decision_reasoning": 0.3,
+            "parent_messages": 0.4,
+            "child_messages": 0.5
+        }
+    }
+}
+agent = AIAgent(config, use_llm=True)
+```
+
+### BlackBox API Integration
+
+The system uses BlackBox AI for enhanced capabilities:
+
+```python
+from src.utils.blackbox_client import BlackBoxClient
+
+# Direct LLM usage
+client = BlackBoxClient()
+
+# Generate enhanced decision reasoning
+reasoning = client.generate_decision_reasoning(
+    message_content="Inappropriate message",
+    threat_type="bullying",
+    severity="high",
+    child_age=12,
+    context={"sender_type": "stranger"}
+)
+
+# Generate personalized parent message
+parent_msg = client.generate_parent_message(
+    child_name="Emma",
+    threat_type="bullying",
+    severity="high",
+    action_taken="Sender blocked",
+    tone="urgent"
+)
+```
+
+## 🎯 Supported Threat Types
+
+The system handles various types of suspicious content:
+
+- **Bullying/Harassment** - Cyberbullying and online harassment
+- **Inappropriate Requests** - Requests from strangers or inappropriate contacts
+- **Sexual/Violent Content** - Explicit or harmful content
+- **Manipulation/Scams** - Attempts to manipulate or defraud
+- **Stranger Contact** - Unsolicited contact from unknown individuals
+
+## 🔧 Configuration
+
+### Agent Configuration (`config/agent_config.json`)
+
+```json
+{
+  "decision_engine": {
+    "severity_thresholds": {
+      "critical": 0.9,
+      "high": 0.7,
+      "medium": 0.4,
+      "low": 0.0
+    },
+    "immediate_action_triggers": [
+      "sexual_content",
+      "violent_content",
+      "manipulation"
+    ]
+  }
+}
+```
+
+### Educational Content (`config/educational_content.json`)
+
+Contains age-appropriate safety tips, educational modules, and crisis resources.
+
+## 📊 Decision-Making Process
+
+The AI agent follows a structured decision-making process:
+
+1. **Risk Assessment** - Calculates risk score based on multiple factors
+2. **Action Selection** - Determines appropriate actions based on threat type and severity
+3. **Communication Planning** - Generates targeted messages for stakeholders
+4. **Timeline Creation** - Schedules actions based on priority
+5. **Follow-up Planning** - Determines if ongoing monitoring is needed
+
+### Risk Factors Considered
+
+- Threat type and severity level
+- Child's age and vulnerability
+- Sender history and behavior patterns
+- Message frequency and context
+- Previous incidents involving the child
+
+## 💬 Communication Types
+
+### For Parents
+- **Urgent Notifications** - Immediate alerts for high-risk situations
+- **Standard Notifications** - Regular updates on incidents
+- **Educational Resources** - Guidance on digital safety and communication
+
+### For Children
+- **Age-Appropriate Alerts** - Gentle notifications tailored to age group
+- **Educational Content** - Safety tips and awareness information
+- **Supportive Messages** - Reassurance and guidance
+
+### For Senders
+- **Warning Messages** - Firm warnings about inappropriate behavior
+- **Educational Information** - Guidelines on acceptable online conduct
+
+## 🧪 Testing
+
+Run the test suite:
+
+```bash
+# Run all tests
+python -m pytest tests/
+
+# Run specific test file
+python -m pytest tests/test_decision_engine.py
+
+# Run with coverage
+python -m pytest tests/ --cov=src
+```
+
+## 📈 Monitoring and Auditing
+
+The system includes comprehensive logging and auditing:
+
+- **Decision Tracking** - All decisions are logged with reasoning
+- **Communication Logs** - Record of all messages sent
+- **Action Execution** - Tracking of action implementation
+- **Performance Metrics** - System performance and effectiveness
+
+## 🔒 Privacy and Safety
+
+- **Child Privacy** - Age-appropriate communication that respects privacy
+- **Data Protection** - Secure handling of sensitive information
+- **Transparency** - Clear reasoning for all decisions and actions
+- **Non-Stigmatizing** - Supportive approach that doesn't blame victims
+
+## 📋 Sample Use Cases
+
+### Case 1: Cyberbullying
+- **Input**: Bullying message to 14-year-old
+- **Actions**: Notify parent, educate child, warn sender, provide resources
+- **Communications**: Supportive message to teen, informative alert to parent
+
+### Case 2: Inappropriate Request
+- **Input**: Stranger requesting personal meeting with 12-year-old
+- **Actions**: Block sender, immediate parent notification, educate child
+- **Communications**: Age-appropriate safety reminder, urgent parent alert
+
+### Case 3: Manipulation Attempt
+- **Input**: Adult attempting to manipulate vulnerable child
+- **Actions**: Block sender, escalate to authorities, comprehensive support
+- **Communications**: Crisis resources, immediate intervention
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Add tests for new functionality
+5. Submit a pull request
+
+## 📄 License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## 🆘 Support
+
+For questions or support:
+- Check the examples in the `examples/` directory
+- Review the test cases in `tests/`
+- Consult the configuration files in `config/`
+
+## 🔮 Future Enhancements
+
+- Machine learning integration for improved decision-making
+- Real-time threat intelligence integration
+- Advanced natural language processing for content analysis
+- Integration with external safety platforms
+- Mobile app for parent notifications
+- Dashboard for monitoring and analytics
+
+---
+
+**Note**: This system is designed to work with pre-classified suspicious messages. It focuses on response coordination rather than initial threat detection.

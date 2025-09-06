@@ -1,0 +1,78 @@
+{
+  "llm": {
+    "enabled": true,
+    "provider": "blackbox",
+    "model": "blackboxai/openai/chatgpt-4o-latest",
+    "fallback_to_templates": true,
+    "temperature": {
+      "decision_reasoning": 0.3,
+      "parent_messages": 0.4,
+      "child_messages": 0.5,
+      "sender_warnings": 0.2
+    },
+    "max_tokens": {
+      "decision_reasoning": 500,
+      "communications": 300
+    }
+  },
+  "decision_engine": {
+    "severity_thresholds": {
+      "critical": 0.9,
+      "high": 0.7,
+      "medium": 0.4,
+      "low": 0.0
+    },
+    "age_groups": {
+      "young_child": [5, 10],
+      "pre_teen": [11, 13],
+      "teenager": [14, 17],
+      "young_adult": [18, 21]
+    },
+    "immediate_action_triggers": [
+      "sexual_content",
+      "violent_content",
+      "manipulation"
+    ],
+    "escalation_criteria": {
+      "risk_score_threshold": 0.9,
+      "repeat_incidents_threshold": 3,
+      "sender_reports_threshold": 2
+    }
+  },
+  "communication": {
+    "default_language": "en",
+    "tone_settings": {
+      "parent_urgent": "urgent",
+      "parent_standard": "informative",
+      "child_young": "gentle",
+      "child_teen": "respectful",
+      "sender_warning": "firm"
+    },
+    "personalization": {
+      "use_child_name": true,
+      "adapt_to_age": true,
+      "consider_previous_incidents": true
+    }
+  },
+  "logging": {
+    "level": "INFO",
+    "audit_enabled": true,
+    "audit_file": "logs/audit.log",
+    "system_log_file": "logs/system.log",
+    "log_llm_interactions": true
+  },
+  "resources": {
+    "base_url": "https://digitalsafety.example.com",
+    "parent_resources": {
+      "general": "/parent-guide",
+      "cyberbullying": "/cyberbullying-help",
+      "predator_protection": "/predator-protection",
+      "communication_tips": "/parent-child-communication"
+    },
+    "child_resources": {
+      "young_child": "/kids-safety",
+      "pre_teen": "/preteen-guide",
+      "teenager": "/teen-digital-citizenship"
+    }
+  }
+}

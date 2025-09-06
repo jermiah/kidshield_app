@@ -1,0 +1,217 @@
+[
+  {
+    "message_id": "msg_001",
+    "content": "Hey, you're really cute. Want to meet up somewhere private? Don't tell your parents.",
+    "threat_type": "inappropriate_request",
+    "severity": "high",
+    "child_profile": {
+      "child_id": "child_123",
+      "age": 12,
+      "name": "Emma",
+      "grade_level": "7th",
+      "previous_incidents": 0,
+      "parental_notification_preferences": {
+        "immediate_notification": true,
+        "daily_summary": false,
+        "weekly_summary": true
+      }
+    },
+    "metadata": {
+      "sender_id": "unknown_sender_456",
+      "sender_type": "stranger",
+      "platform": "social_media",
+      "timestamp": "2024-01-15T14:30:00Z",
+      "message_frequency": 3,
+      "sender_history": {
+        "previous_reports": 1,
+        "account_age_days": 5
+      },
+      "confidence_score": 0.85
+    },
+    "context": {
+      "conversation_length": 1,
+      "time_of_day": "afternoon",
+      "platform_specific": {
+        "direct_message": true,
+        "public_post": false
+      }
+    }
+  },
+  {
+    "message_id": "msg_002",
+    "content": "You're so stupid and ugly. Nobody likes you. Kill yourself.",
+    "threat_type": "bullying",
+    "severity": "critical",
+    "child_profile": {
+      "child_id": "child_456",
+      "age": 14,
+      "name": "Alex",
+      "grade_level": "9th",
+      "previous_incidents": 2,
+      "parental_notification_preferences": {
+        "immediate_notification": true,
+        "daily_summary": true,
+        "weekly_summary": true
+      }
+    },
+    "metadata": {
+      "sender_id": "classmate_789",
+      "sender_type": "known_contact",
+      "platform": "messaging_app",
+      "timestamp": "2024-01-15T20:45:00Z",
+      "message_frequency": 8,
+      "sender_history": {
+        "previous_reports": 0,
+        "relationship": "classmate"
+      },
+      "confidence_score": 0.95
+    },
+    "context": {
+      "conversation_length": 15,
+      "escalation_pattern": true,
+      "school_related": true
+    }
+  },
+  {
+    "message_id": "msg_003",
+    "content": "I have some special photos I want to show you. Click this link but don't tell anyone about it.",
+    "threat_type": "sexual_content",
+    "severity": "critical",
+    "child_profile": {
+      "child_id": "child_789",
+      "age": 10,
+      "name": "Sam",
+      "grade_level": "5th",
+      "previous_incidents": 0,
+      "parental_notification_preferences": {
+        "immediate_notification": true,
+        "daily_summary": false,
+        "weekly_summary": true
+      }
+    },
+    "metadata": {
+      "sender_id": "predator_123",
+      "sender_type": "stranger",
+      "platform": "game_chat",
+      "timestamp": "2024-01-15T16:20:00Z",
+      "message_frequency": 1,
+      "sender_history": {
+        "previous_reports": 3,
+        "flagged_content": true
+      },
+      "confidence_score": 0.92
+    },
+    "context": {
+      "contains_link": true,
+      "grooming_indicators": ["secrecy", "special_content"],
+      "platform_specific": {
+        "game_context": "multiplayer_chat"
+      }
+    }
+  },
+  {
+    "message_id": "msg_004",
+    "content": "You won a $500 gift card! Just give me your address and phone number to claim it.",
+    "threat_type": "scam",
+    "severity": "medium",
+    "child_profile": {
+      "child_id": "child_101",
+      "age": 16,
+      "name": "Jordan",
+      "grade_level": "11th",
+      "previous_incidents": 1,
+      "parental_notification_preferences": {
+        "immediate_notification": false,
+        "daily_summary": true,
+        "weekly_summary": true
+      }
+    },
+    "metadata": {
+      "sender_id": "scammer_555",
+      "sender_type": "stranger",
+      "platform": "email",
+      "timestamp": "2024-01-15T10:15:00Z",
+      "message_frequency": 1,
+      "sender_history": {
+        "previous_reports": 0,
+        "suspicious_domain": true
+      },
+      "confidence_score": 0.78
+    },
+    "context": {
+      "financial_incentive": true,
+      "personal_info_request": true,
+      "urgency_indicators": false
+    }
+  },
+  {
+    "message_id": "msg_005",
+    "content": "Your friend told me you're having problems at home. I can help you. Meet me after school.",
+    "threat_type": "manipulation",
+    "severity": "high",
+    "child_profile": {
+      "child_id": "child_202",
+      "age": 13,
+      "name": "Riley",
+      "grade_level": "8th",
+      "previous_incidents": 0,
+      "parental_notification_preferences": {
+        "immediate_notification": true,
+        "daily_summary": false,
+        "weekly_summary": true
+      }
+    },
+    "metadata": {
+      "sender_id": "manipulator_888",
+      "sender_type": "stranger",
+      "platform": "social_media",
+      "timestamp": "2024-01-15T15:30:00Z",
+      "message_frequency": 2,
+      "sender_history": {
+        "previous_reports": 1,
+        "fake_profile_indicators": true
+      },
+      "confidence_score": 0.88
+    },
+    "context": {
+      "emotional_manipulation": true,
+      "meeting_request": true,
+      "vulnerability_exploitation": true
+    }
+  },
+  {
+    "message_id": "msg_006",
+    "content": "Stop being such a loser. Everyone thinks you're weird.",
+    "threat_type": "harassment",
+    "severity": "medium",
+    "child_profile": {
+      "child_id": "child_303",
+      "age": 11,
+      "name": "Casey",
+      "grade_level": "6th",
+      "previous_incidents": 1,
+      "parental_notification_preferences": {
+        "immediate_notification": true,
+        "daily_summary": true,
+        "weekly_summary": true
+      }
+    },
+    "metadata": {
+      "sender_id": "bully_999",
+      "sender_type": "known_contact",
+      "platform": "messaging_app",
+      "timestamp": "2024-01-15T12:00:00Z",
+      "message_frequency": 5,
+      "sender_history": {
+        "previous_reports": 1,
+        "relationship": "schoolmate"
+      },
+      "confidence_score": 0.72
+    },
+    "context": {
+      "pattern_behavior": true,
+      "social_exclusion": true,
+      "school_hours": true
+    }
+  }
+]

@@ -7,7 +7,7 @@ from dataclasses import dataclass
 @dataclass
 class ModelConfig:
     """Configuration for AI models"""
-    blackbox_api_key: str = "sk-FHB-1qkNAyIN7i8DLJAddg"
+    blackbox_api_key: str = "ADD A KEY HERE"
     blackbox_base_url: str = "https://www.blackbox.ai/api/chat"
     
     # OpenAI configuration for structured outputs

@@ -1,4 +1,4 @@
-class KidShieldApp {
+class HonuApp {
     constructor() {
         this.conversations = new Map();
         this.currentConversation = null;
@@ -31,15 +31,38 @@ class KidShieldApp {
             e.target.style.height = 'auto';
             e.target.style.height = e.target.scrollHeight + 'px';
         });
+
+        // Real-time bad word checking
+        messageInput.addEventListener('input', () => this.checkForBadWords());
     }
 
     connectWebSocket() {
         // In a real app, this would connect to a WebSocket server
         // For demo purposes, we'll simulate real-time updates
         console.log('🔌 Connecting to WebSocket...');
-        
+
         // Simulate receiving messages periodically for demo
         this.simulateIncomingMessages();
+    }
+
+    async checkForBadWords() {
+        if (!this.currentConversation) return;
+
+        const input = document.getElementById('messageInput');
+        const text = input.value.trim();
+
+        if (!text) return;
+
+        try {
+            const response = await fetch(`http://localhost:3000/send?text=${encodeURIComponent(text)}&to=${this.currentConversation}&check=true`);
+            const result = await response.json();
+
+            if (result.success === false) {
+                this.showNotification('Warning', result.message);
+            }
+        } catch (error) {
+            console.error('Error checking for bad words:', error);
+        }
     }
 
     loadConversations() {
@@ -48,8 +71,16 @@ class KidShieldApp {
             {
                 id: '919952072184',
                 name: 'Emma (Child)',
-                lastMessage: 'Hi mom, how are you?',
+                lastMessage: '',
                 time: '2 min ago',
+                unread: 0,
+                status: 'safe'
+            },
+            {
+                id: '919876543210',
+                name: 'Parent',
+                lastMessage: '',
+                time: 'now',
                 unread: 0,
                 status: 'safe'
             },
@@ -215,45 +246,41 @@ class KidShieldApp {
     async sendMessage() {
         const input = document.getElementById('messageInput');
         const text = input.value.trim();
-        
+
         if (!text || !this.currentConversation) return;
 
-        // Add message to UI immediately
-        const message = {
-            id: Date.now(),
-            text: text,
-            type: 'sent',
-            time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
-            flagged: false
-        };
-
-        const conv = this.conversations.get(this.currentConversation);
-        conv.messages.push(message);
-        conv.lastMessage = text;
-        conv.time = 'now';
-
-        // Clear input
-        input.value = '';
-
-        // Update UI
-        this.renderConversations();
-        this.renderMessages();
-
-        // Send to backend for analysis
+        // Fetch from /send endpoint to check for bad words and send
         try {
-            const response = await fetch('http://localhost:3000/api/send-message', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    to: this.currentConversation,
-                    message: text
-                })
-            });
-
+            const response = await fetch(`http://localhost:3000/send?text=${encodeURIComponent(text)}&to=${this.currentConversation}`);
             const result = await response.json();
-            console.log('📤 Message sent:', result);
+            console.log('📤 Send response:', result);
+
+            // Add message to UI
+            const message = {
+                id: Date.now(),
+                text: text,
+                type: 'sent',
+                time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
+                flagged: result.success === false,
+                actions: result.success === false ? result.actions : null
+            };
+
+            if (result.success === false) {
+                // Bad word detected, show notification
+                this.showNotification('Warning', result.message);
+            }
+
+            const conv = this.conversations.get(this.currentConversation);
+            conv.messages.push(message);
+            conv.lastMessage = text;
+            conv.time = 'now';
+
+            // Clear input
+            input.value = '';
+
+            // Update UI
+            this.renderConversations();
+            this.renderMessages();
 
         } catch (error) {
             console.error('❌ Error sending message:', error);
@@ -384,9 +411,9 @@ class KidShieldApp {
     simulateIncomingMessages() {
         // Simulate receiving messages for demo purposes
         const demoMessages = [
-            { from: '918765432109', text: 'Hey, want to be friends?', delay: 3000 },
-            { from: '918765432109', text: 'Can you send me a photo of yourself?', delay: 8000 },
-            { from: '919952072184', text: 'Mom, someone is bothering me online', delay: 15000 }
+            { from: '919876543210', text: 'Hey, want to be friends?', delay: 3000 },
+            { from: '919952072184', text: 'Can you send me a photo of yourself?', delay: 8000 },
+            { from: '918765432109', text: 'Mom, someone is bothering me online', delay: 15000 }
         ];
 
         demoMessages.forEach(msg => {
@@ -399,13 +426,29 @@ class KidShieldApp {
 
 // Initialize the app when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
-    window.kidShieldApp = new KidShieldApp();
-    console.log('🚀 KidShield App initialized');
+    window.honuApp = new HonuApp();
+    console.log('🚀 Honu App initialized');
 });
 
 // Expose functions for testing
 window.testReceiveMessage = (from, text) => {
-    if (window.kidShieldApp) {
-        window.kidShieldApp.receiveMessage(from, text);
+    if (window.honuApp) {
+        window.honuApp.receiveMessage(from, text);
     }
 };
+
+  const eventSource = new EventSource('http://localhost:3000/events');
+      const container = document.getElementById('messages');
+
+      eventSource.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        console.log('Received event:', data);
+        const p = document.createElement('p');
+        console.log('📩 Incoming message event:', data) ;
+        p.textContent = `📩 From ${data.from}: ${data.text}`;
+        container.appendChild(p);
+      };
+
+      eventSource.onerror = () => {
+        console.log("Connection lost. Browser will auto-reconnect.");
+      };

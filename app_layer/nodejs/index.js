@@ -3,6 +3,50 @@ const express = require('express');
 const path = require('path');
 const app = express();
 const axios = require('axios');
+const cors = require('cors');
+app.use(cors());
+
+let clients = [];
+
+let badMessage = '';
+
+// Helper: add client
+function addClient(res) {
+  const clientId = Date.now();
+  const newClient = { id: clientId, res };
+  clients.push(newClient);
+  console.log(`👥 Client ${clientId} connected. Total: ${clients.length}`);
+  return clientId;
+}
+
+// Helper function to broadcast messages to all clients
+function broadcastMessage(data) {
+  clients.forEach(client => client.write(`data: ${JSON.stringify(data)}\n\n`));
+}
+
+
+// Helper: remove client
+function removeClient(id) {
+  clients = clients.filter(c => c.id !== id);
+  console.log(`❌ Client ${id} disconnected. Total: ${clients.length}`);
+}
+
+app.get('/events', (req, res) => {
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+
+  console.log('👥 Client connected to SSE');
+
+  // Keep connection open
+  clients.push(res);
+
+  // Clean up when client disconnects
+  req.on('close', () => {
+    console.log('❌ Client disconnected from SSE');
+    clients = clients.filter(client => client !== res);
+  });
+});
 
 const PORT = process.env.PORT || 3000;
 // Set this in your .env and in the Meta "Verify Token" field
@@ -126,14 +170,15 @@ async function sendWhatsAppText(to, text) {
 async function analyzeMessageWithGuardian(messageText, userId) {
   try {
     console.log('🛡️ Analyzing message with Guardian Layer:', messageText);
-    
+
     const response = await axios.post('http://localhost:8000/guardian/auto-analyze', {
       content: messageText,
       user_id: userId
     });
 
-    console.log('📊 Guardian Analysis Result:', response.data);
-    return response.data;
+    broadcastMessage(response.data, messageText);
+
+    return { ...response.data, text: messageText };
   } catch (error) {
     console.error('❌ Error analyzing message with Guardian Layer:', error.message);
     return null;
@@ -260,11 +305,31 @@ app.get('/send-template', async (req, res) => {
 app.get('/send', async (req, res) => {
   try {
     const text = req.query.text || 'Hello from Express + WhatsApp 🚀';
+    const to = req.query.to || '919952072184';   // allow dynamic recipient
+    const check = req.query.check === 'true';   // check mode: analyze without sending
+
+    // Analyze message for bad words using Guardian Layer
+    const analysisResult = await analyzeMessageWithGuardian(text, to);
+
+    if (analysisResult && analysisResult.success && analysisResult.data.action_types && analysisResult.data.action_types.length > 0) {
+      console.log('⚠️ Bad word detected in message:', text);
+      return res.json({
+        success: false,
+        message: 'Bad word detected. Message not sent.',
+        actions: analysisResult.data
+      });
+    }
+
+    if (check) {
+      // In check mode, don't send, just return success
+      console.log('✅ Message checked, no bad words:', text);
+      return res.json({ success: true, message: 'Message is safe' });
+    }
 
     const url = `https://graph.facebook.com/v21.0/${process.env.WHATSAPP_PHONE_NUMBER_ID}/messages`;
     const payload = {
       messaging_product: 'whatsapp',
-      to: '919952072184',   // fixed recipient
+      to: to,
       type: 'text',
       text: { body: text }
     };
@@ -275,7 +340,7 @@ app.get('/send', async (req, res) => {
 
     const { data } = await axios.post(url, payload, { headers });
     console.log('✅ Sent message:', data);
-    res.json(data);
+    res.json({ success: true, message: 'Message sent successfully', data });
   } catch (err) {
     const status = err?.response?.status;
     const data = err?.response?.data;
@@ -288,7 +353,7 @@ app.get('/send', async (req, res) => {
 app.post('/webhook', async (req, res) => {
   const body = req.body;
 
-  // Always acknowledge quickly
+  // Acknowledge quickly
   res.status(200).send('EVENT_RECEIVED');
 
   try {
@@ -306,25 +371,21 @@ app.post('/webhook', async (req, res) => {
     // Messages (inbound user messages)
     if (value.messages && value.messages.length > 0) {
       const msg = value.messages[0];
-      const from = msg.from;              // WhatsApp user phone number
-      const type = msg.type;              // text, image, etc.
+      const from = msg.from;
+      const type = msg.type;
       const text = msg.text?.body;
-      console.log('✅ Received message:', { from, type, text, msg});
+      console.log('✅ Received message:', { from, type, text });
 
-      // Analyze message with Guardian Layer and apply agent actions
+      // ✅ Broadcast to all connected frontends
       if (text) {
         try {
           const analysisResult = await analyzeMessageWithGuardian(text, from);
-
-          if (analysisResult && analysisResult.success) {
+          if (analysisResult?.success) {
             const actionData = analysisResult.data;
-            
-            if (actionData.action_types && actionData.action_types.length > 0) {
+            if (actionData.action_types?.length > 0) {
+              // broadcastMessage({ from, text, type, timestamp: Date.now()});
               console.log('⚠️ Suspicious message detected! Actions:', actionData.action_types);
-              
-              // Apply the actions determined by the agent layer
               await applyAgentActions(analysisResult, text, from);
-              
               console.log('✅ All safety actions have been applied');
             } else {
               console.log('✅ Message is safe - no actions needed');
@@ -334,17 +395,14 @@ app.post('/webhook', async (req, res) => {
           console.error('❌ Error processing message:', error.message);
         }
       }
-
       return;
     }
 
-    // Status updates (message delivery/read receipts)
     if (value.statuses && value.statuses.length > 0) {
       console.log('ℹ️ Status update:', value.statuses[0]);
       return;
     }
 
-    // Other webhook deliveries (e.g., template, errors)
     console.log('ℹ️ Other change value:', value);
   } catch (e) {
     console.error('❌ Error handling webhook:', e);

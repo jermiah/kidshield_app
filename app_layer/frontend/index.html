@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>KidShield - Safe Messaging</title>
+    <title>Honu - Safe Messaging</title>
     <style>
         * {
             margin: 0;
@@ -13,7 +13,7 @@
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #4CAF50 0%, #2E7D32 100%);
             height: 100vh;
             display: flex;
             justify-content: center;
@@ -42,8 +42,17 @@
         .sidebar-header {
             padding: 20px;
             border-bottom: 1px solid #e9ecef;
-            background: #6c5ce7;
+            background: #388E3C;
             color: white;
+            text-align: center;
+        }
+
+        .sidebar-header img {
+            width: 80px;
+            height: 80px;
+            margin-bottom: 10px;
+            border-radius: 50%;
+            object-fit: contain;
         }
 
         .sidebar-header h1 {
@@ -74,8 +83,8 @@
         }
 
         .conversation-item.active {
-            background: #e3f2fd;
-            border-right: 3px solid #2196f3;
+            background: #E8F5E8;
+            border-right: 3px solid #4CAF50;
         }
 
         .conversation-name {
@@ -150,7 +159,7 @@
         }
 
         .message.sent .message-bubble {
-            background: #2196f3;
+            background: #4CAF50;
             color: white;
         }
 
@@ -201,7 +210,7 @@
         }
 
         .action-icon.parent { background: #4caf50; }
-        .action-icon.child { background: #2196f3; }
+        .action-icon.child { background: #4CAF50; }
         .action-icon.sender { background: #ff5722; }
 
         .input-area {
@@ -228,7 +237,7 @@
         }
 
         .send-button {
-            background: #2196f3;
+            background: #4CAF50;
             color: white;
             border: none;
             border-radius: 50%;
@@ -243,7 +252,7 @@
         }
 
         .send-button:hover {
-            background: #1976d2;
+            background: #388E3C;
         }
 
         .status-indicator {
@@ -306,7 +315,8 @@
         <!-- Sidebar -->
         <div class="sidebar">
             <div class="sidebar-header">
-                <h1>🛡️ KidShield</h1>
+                <img src="honu_logo.jpeg" alt="Honu Logo">
+                <h1>🐢 Honu</h1>
                 <p>Safe Messaging Platform</p>
             </div>
             <div class="conversations" id="conversations">
@@ -326,7 +336,7 @@
 
             <div class="messages-container" id="messagesContainer">
                 <div style="text-align: center; color: #666; margin-top: 50px;">
-                    <h3>Welcome to KidShield</h3>
+                    <h3>Welcome to Honu</h3>
                     <p>Your messages are protected by our AI safety system</p>
                 </div>
             </div>
@@ -347,6 +357,8 @@
             </div>
         </div>
     </div>
+
+   
 
     <!-- Notification Panel -->
     <div class="notification-panel" id="notificationPanel">

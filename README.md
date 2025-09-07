@@ -1,15 +1,39 @@
-# AI Agent System for Suspicious Message Management
+![honu_logo](https://github.com/user-attachments/assets/248fa6d7-7084-42c6-908c-ab59e5e920b0)
 
-A comprehensive system of AI agents designed to handle suspicious messages that have been pre-classified by detection systems. The agents make intelligent decisions about appropriate actions and manage all related communications with parents, children, and potentially the senders.
+A comprehensive three-layer AI system designed to protect children online through intelligent content analysis, decision-making, and coordinated response actions. KidShield combines advanced LLM capabilities with robust safety mechanisms to provide real-time protection against digital threats.
 
 ## 🎯 Overview
 
 This system receives incoming messages that have already been classified as suspicious and focuses on:
 
-- **AI-Enhanced Decision-Making**: Using BlackBox LLM for intelligent context analysis and reasoning
-- **Personalized Communication**: Generating tailored, age-appropriate messages for all stakeholders
-- **Educational Support**: Providing contextual safety resources and guidance
-- **Action Coordination**: Managing all aspects of the response process with AI assistance
+- **Detects Threats**: Uses advanced LLM models to analyze text and images for potential dangers
+- **Makes Smart Decisions**: AI-enhanced decision engine determines appropriate protective actions
+- **Coordinates Responses**: Manages communications with parents, children, and relevant authorities
+- **Provides Education**: Delivers age-appropriate safety resources and guidance
+- **Ensures Safety**: Maintains comprehensive audit trails and fallback mechanisms
+
+## 🏗️ Three-Layer Architecture
+
+KidShield implements a clean three-layer architecture for maximum modularity and scalability:
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                      APP LAYER                              │
+│  User Interfaces • APIs • Authentication • Dashboards      │
+├─────────────────────────────────────────────────────────────┤
+│                    GUARDIAN LAYER                           │
+│  LLM Analysis • Threat Detection • Content Classification  │
+├─────────────────────────────────────────────────────────────┤
+│                     AGENT LAYER                             │
+│  Decision Making • Communication • Action Coordination     │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### Layer Responsibilities
+
+**🖥️ App Layer**: User-facing interfaces, authentication, and application logic  
+**🛡️ Guardian Layer**: AI-powered content analysis and threat detection  
+**🤖 Agent Layer**: Intelligent decision-making and response coordination
 
 ## 🤖 LLM Integration
 
@@ -41,22 +65,27 @@ The system integrates with **BlackBox AI** to provide enhanced capabilities:
 - ✅ Configurable response templates
 - ✅ Comprehensive logging and monitoring
 
-## 📁 Project Structure
+
+## 🔄 Layer Interaction Flow
+
+The three layers work together in a coordinated flow:
 
 ```
-ai_agent_system/
-├── src/
-│   ├── models/           # Data models for messages and actions
-│   ├── agents/           # Main AI agent implementation
-│   ├── decision_engine/  # Decision-making logic
-│   ├── communication/    # Message generation
-│   └── utils/           # Utilities and logging
-├── config/              # Configuration files
-├── data/               # Sample data and test cases
-├── tests/              # Unit tests
-├── examples/           # Usage examples
-└── README.md
+1. 📱 App Layer receives user input (message, image, etc.)
+   ↓
+2. 🛡️ Guardian Layer analyzes content using LLM models
+   ↓ (threat detected)
+3. 🤖 Agent Layer makes decisions and coordinates responses
+   ↓
+4. 📱 App Layer delivers notifications and educational content
 ```
+
+### Integration Points
+
+- **App → Guardian**: Content submission for analysis
+- **Guardian → Agent**: Threat detection results and risk scores
+- **Agent → App**: Action plans and communication content
+- **Cross-Layer**: Comprehensive logging and audit trails
 
 ## 🚀 Quick Start
 
@@ -70,29 +99,35 @@ ai_agent_system/
 
 1. Clone the repository:
 ```bash
-git clone <repository-url>
-cd ai_agent_system
+git clone https://github.com/jermiah/kidshield_app.git
+cd kidshield_app
 ```
 
 2. Install dependencies:
 ```bash
+python -m venv myenv
+source myenv/bin/activate
 pip install -r requirements.txt
 ```
 
 3. Set up your BlackBox API key:
 ```bash
 # Create .env file with your API key
+touch .env
 echo "BLACKBOX_API_KEY=your_api_key_here" > .env
 ```
 
-4. Run the basic example:
+4. Run fastapi server:
 ```bash
-python examples/basic_usage.py
+cd guardian_layer/api
+fastapi run guardian_api.py
 ```
 
-5. Test LLM integration:
+5. Run nodejs server to connect to WhatsApp
 ```bash
-python examples/llm_enhanced_usage.py
+cd app_layer/nodejs
+npm i
+npm run dev
 ```
 
 ### Basic Usage

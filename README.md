@@ -76,6 +76,8 @@ cd ai_agent_system
 
 2. Install dependencies:
 ```bash
+python -m venv myenv
+source myenv/bin/activate
 pip install -r requirements.txt
 ```
 

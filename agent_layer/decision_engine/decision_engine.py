@@ -175,50 +175,85 @@ class DecisionEngine:
         return actions
     
     def _determine_communication_actions(self, message: SuspiciousMessage, risk_score: float) -> List[ActionDecision]:
-        """Determine communication actions for parents and children"""
+        """Determine communication actions for parents, children, and senders"""
         actions = []
         
-        # Always notify parent for high-risk situations
-        if risk_score >= 0.6:
+        # ALWAYS notify parent when any risk is detected (risk_score > 0)
+        if risk_score > 0:
+            priority = ActionPriority.IMMEDIATE if risk_score >= 0.8 else (
+                ActionPriority.HIGH if risk_score >= 0.6 else ActionPriority.MEDIUM
+            )
+            
+            reasoning = self._generate_enhanced_reasoning(
+                message, "notify_parent", risk_score,
+                f"Risk detected ({risk_score:.2f}) - parental notification required for {message.threat_type.value}"
+            )
+            
             actions.append(ActionDecision(
                 action_type=ActionType.NOTIFY_PARENT,
-                priority=ActionPriority.IMMEDIATE if risk_score >= 0.8 else ActionPriority.HIGH,
-                reasoning=f"High risk score ({risk_score:.2f}) requires immediate parental notification",
+                priority=priority,
+                reasoning=reasoning,
                 confidence=0.95,
                 target_audience=["parent"],
                 estimated_impact="Ensures parent awareness and enables protective measures"
             ))
         
-        # Notify child based on age and situation
-        if message.child_profile.age >= 10:  # Age-appropriate notification
+        # ALWAYS educate child when any risk is detected (age-appropriate)
+        if risk_score > 0:
             priority = ActionPriority.HIGH if risk_score >= 0.7 else ActionPriority.MEDIUM
-            actions.append(ActionDecision(
-                action_type=ActionType.NOTIFY_CHILD,
-                priority=priority,
-                reasoning=f"Child is old enough ({message.child_profile.age}) to receive age-appropriate notification",
-                confidence=0.8,
-                target_audience=["child"],
-                estimated_impact="Increases child's awareness and safety knowledge"
-            ))
-        
-        return actions
-    
-    def _determine_educational_actions(self, message: SuspiciousMessage) -> List[ActionDecision]:
-        """Determine educational actions based on threat type and child profile"""
-        actions = []
-        
-        # Educational content for child (age-appropriate)
-        if message.child_profile.age >= 8:
+            
+            reasoning = self._generate_enhanced_reasoning(
+                message, "educate_child", risk_score,
+                f"Educational intervention required for {message.threat_type.value} threat (child age: {message.child_profile.age})"
+            )
+            
             actions.append(ActionDecision(
                 action_type=ActionType.EDUCATE_CHILD,
-                priority=ActionPriority.MEDIUM,
-                reasoning=f"Educational intervention appropriate for {message.threat_type.value} threat",
+                priority=priority,
+                reasoning=reasoning,
                 confidence=0.85,
                 target_audience=["child"],
                 estimated_impact="Builds long-term safety awareness and resilience"
             ))
         
-        # Provide resources to parents
+        # ALWAYS warn sender when any risk is detected
+        if risk_score > 0:
+            priority = ActionPriority.IMMEDIATE if risk_score >= 0.8 else (
+                ActionPriority.HIGH if risk_score >= 0.5 else ActionPriority.MEDIUM
+            )
+            
+            reasoning = self._generate_enhanced_reasoning(
+                message, "warn_sender", risk_score,
+                f"Sender warning required for {message.threat_type.value} classification (risk: {risk_score:.2f})"
+            )
+            
+            actions.append(ActionDecision(
+                action_type=ActionType.WARN_SENDER,
+                priority=priority,
+                reasoning=reasoning,
+                confidence=0.9,
+                target_audience=["sender"],
+                estimated_impact=f"Warns sender about {message.threat_type.value} violation and potential consequences"
+            ))
+        
+        # Optional: Notify child based on age and situation (in addition to education)
+        if risk_score >= 0.4 and message.child_profile.age >= 10:
+            actions.append(ActionDecision(
+                action_type=ActionType.NOTIFY_CHILD,
+                priority=ActionPriority.MEDIUM,
+                reasoning=f"Child is old enough ({message.child_profile.age}) to receive age-appropriate notification about the incident",
+                confidence=0.8,
+                target_audience=["child"],
+                estimated_impact="Increases child's awareness of the specific incident"
+            ))
+        
+        return actions
+    
+    def _determine_educational_actions(self, message: SuspiciousMessage) -> List[ActionDecision]:
+        """Determine additional educational actions based on threat type and child profile"""
+        actions = []
+        
+        # Provide resources to parents (complementary to the main notification)
         actions.append(ActionDecision(
             action_type=ActionType.PROVIDE_RESOURCES,
             priority=ActionPriority.MEDIUM,

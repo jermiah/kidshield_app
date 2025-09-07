@@ -394,17 +394,12 @@ async def auto_analyze_content(request: SimpleRequest):
             return EnhancedAPIResponse(
                 success=True,
                 data={
-                    "guardian_analysis": result.dict(),
-                    "agent_processing": {
-                        "triggered": False,
-                        "message_id": None,
-                        "actions_planned": 0,
-                        "action_types": [],
-                        "followup_required": False,
-                        "followup_date": None
-                    }
+                    "action_types": [],
+                    "messages": [],
+                    "message_id": result.input_id,
+                    "followup_required": False
                 },
-                message=f"{message} - No risks detected"
+                message="No risks detected - content is safe"
             )
         
         # If risks are detected, pass to agent layer for decision-making
@@ -440,37 +435,41 @@ async def auto_analyze_content(request: SimpleRequest):
             
             logger.info(f"Agent processing completed for message {result.input_id}. Generated {len(action_plan.decisions)} actions.")
             
-            # Return response indicating agent processing was triggered
+            # Extract only the essential information: action types and messages
+            messages_to_send = []
+            for comm in action_plan.communications:
+                messages_to_send.append({
+                    "recipient": comm.recipient_type,
+                    "subject": comm.subject,
+                    "message": comm.message,
+                    "tone": comm.tone
+                })
+            
+            # Return simplified response with only action types and messages
             return EnhancedAPIResponse(
                 success=True,
                 data={
-                    "guardian_analysis": result.dict(),
-                    "agent_processing": {
-                        "triggered": True,
-                        "message_id": suspicious_message.message_id,
-                        "actions_planned": len(action_plan.decisions),
-                        "action_types": [d.action_type.value for d in action_plan.decisions],
-                        "followup_required": action_plan.followup_required,
-                        "followup_date": action_plan.followup_date.isoformat() if action_plan.followup_date else None,
-                        "action_plan": action_plan.to_dict()
-                    }
+                    "action_types": [d.action_type.value for d in action_plan.decisions],
+                    "messages": messages_to_send,
+                    "message_id": suspicious_message.message_id,
+                    "followup_required": action_plan.followup_required
                 },
-                message=f"{message} - Risks detected, agent actions initiated"
+                message="Actions planned and messages generated"
             )
             
         except Exception as agent_error:
             logger.error(f"Agent layer processing failed: {str(agent_error)}")
-            # Return Guardian results even if agent processing fails
+            # Return simplified error response
             return EnhancedAPIResponse(
-                success=True,
+                success=False,
                 data={
-                    "guardian_analysis": result.dict(),
-                    "agent_processing": {
-                        "triggered": False,
-                        "error": str(agent_error)
-                    }
+                    "action_types": [],
+                    "messages": [],
+                    "message_id": result.input_id,
+                    "followup_required": False,
+                    "error": str(agent_error)
                 },
-                message=f"{message} - Risks detected, but agent processing failed"
+                message="Risks detected, but agent processing failed"
             )
         
     except HTTPException:

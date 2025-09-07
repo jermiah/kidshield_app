@@ -285,13 +285,14 @@ Provide both a subject line and message body.
                 "message": f"Hi {child_name}, we noticed something online that we want to help you with. Remember, you can always talk to a trusted grown-up if something online makes you feel uncomfortable."
             }
     
-    def generate_sender_warning(self, threat_type: str, platform: str) -> Dict[str, str]:
+    def generate_sender_warning(self, threat_type: str, platform: str, severity: str = "medium") -> Dict[str, str]:
         """
         Generate warning message for senders
         
         Args:
             threat_type: Type of inappropriate behavior
             platform: Platform where incident occurred
+            severity: Severity level of the violation
             
         Returns:
             Dictionary with 'subject' and 'message' keys
@@ -301,16 +302,19 @@ Provide both a subject line and message body.
 Generate a firm but professional warning message for someone who sent inappropriate content to a child.
 
 Details:
-- Violation type: {threat_type}
+- Threat classification: {threat_type}
+- Severity level: {severity}
 - Platform: {platform}
 
 Requirements:
-- Be firm and direct about the violation
-- Explain why the behavior is unacceptable
-- Mention potential consequences
+- Be firm and direct about the specific threat classification
+- Reference the severity level in the warning
+- Explain why the behavior is unacceptable and puts children at risk
+- Mention potential consequences based on severity
 - Reference community guidelines/laws
 - Professional tone, not aggressive
 - Clear call to action to stop the behavior
+- Emphasize protection of vulnerable users (children)
 
 Provide both a subject line and message body.
 """
@@ -318,7 +322,7 @@ Provide both a subject line and message body.
         messages = [
             {
                 "role": "system",
-                "content": "You are a digital safety enforcement specialist. Generate firm, professional warnings for policy violations."
+                "content": "You are a digital safety enforcement specialist. Generate firm, professional warnings for policy violations that reference specific threat classifications and severity levels."
             },
             {
                 "role": "user",
@@ -344,7 +348,8 @@ Provide both a subject line and message body.
                         break
             
             if not subject or not message:
-                subject = "Warning: Inappropriate Communication Detected"
+                threat_classification = threat_type.replace('_', ' ').title()
+                subject = f"{severity.upper()} Warning: {threat_classification} Content Detected"
                 message = content
             
             return {
@@ -354,7 +359,8 @@ Provide both a subject line and message body.
             
         except Exception as e:
             self.logger.error(f"Failed to generate sender warning: {str(e)}")
+            threat_classification = threat_type.replace('_', ' ').title()
             return {
-                "subject": "Warning: Inappropriate Communication Detected",
-                "message": f"Your recent communication has been identified as {threat_type}, which violates our community guidelines. Please review our policies and modify your behavior accordingly."
+                "subject": f"{severity.upper()} Warning: {threat_classification} Content Detected",
+                "message": f"Your recent communication has been classified as {threat_classification} with {severity} severity. This violates our community guidelines and puts vulnerable users at risk. Please review our policies immediately."
             }

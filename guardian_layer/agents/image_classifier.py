@@ -1,4 +1,4 @@
-"""Image Classifier Agent for detecting harmful visual content"""
+"""Image Classifier Agent for detecting harmful visual content using Blackbox AI"""
 
 import json
 import base64
@@ -6,28 +6,28 @@ import aiohttp
 from typing import List, Dict, Any, Optional
 from PIL import Image
 import io
-from .base_agent import AIAgent
+from .base_agent import BaseAgent
 from ..models import InputMessage, AgentResult, ThreatCategory, ContentType
 from ..config import config
 
-class ImageClassifierAgent(AIAgent):
-    """Agent for classifying image content using Blackbox AI vision capabilities"""
-    
+class ImageClassifierAgent(BaseAgent):
+    """Agent for classifying image content using Blackbox AI vision"""
+
     def __init__(self):
         super().__init__(
             name="ImageClassifier",
-            api_key=config.model.blackbox_api_key,
             confidence_threshold=config.model.image_model_confidence
         )
-        self.base_url = config.model.blackbox_base_url
+        self.base_url = "https://api.blackbox.ai/chat/completions"
+        self.api_key = config.model.blackbox_api_key
         self.max_image_size = (1024, 1024)  # Resize large images
-    
+
     def can_process(self, message: InputMessage) -> bool:
         """Check if this agent can process the message"""
         return message.content_type in [ContentType.IMAGE, ContentType.MULTIMODAL]
-    
+
     async def analyze(self, message: InputMessage) -> AgentResult:
-        """Analyze image content for harmful visual patterns"""
+        """Analyze image content using Blackbox AI vision"""
         if not message.image_data and not message.image_path:
             return self._create_result(
                 confidence=1.0,
@@ -36,7 +36,7 @@ class ImageClassifierAgent(AIAgent):
                 explanation="No image content to analyze",
                 processing_time=0.0
             )
-        
+
         try:
             # Load and preprocess image
             image_data = await self._load_and_preprocess_image(message)
@@ -48,10 +48,10 @@ class ImageClassifierAgent(AIAgent):
                     explanation="Failed to load or process image",
                     processing_time=0.0
                 )
-            
-            # Perform AI-based image analysis
+
+            # Perform AI analysis
             ai_result = await self._ai_image_analysis(image_data)
-            
+
             return self._create_result(
                 confidence=ai_result['confidence'],
                 risk_score=ai_result['risk_score'],
@@ -60,20 +60,15 @@ class ImageClassifierAgent(AIAgent):
                 processing_time=0.0,
                 metadata={
                     'image_processed': True,
-                    'analysis_method': 'ai_vision'
+                    'analysis_type': 'blackbox_vision'
                 }
             )
-            
+
         except Exception as e:
             self.logger.error(f"Image analysis failed: {str(e)}")
-            return self._create_result(
-                confidence=0.3,
-                risk_score=0.5,
-                threats=[],
-                explanation=f"Image analysis failed: {str(e)}",
-                processing_time=0.0
-            )
-    
+            # Fallback to basic image checks
+            return await self._fallback_analyze(message)
+
     async def _load_and_preprocess_image(self, message: InputMessage) -> Optional[bytes]:
         """Load and preprocess image data"""
         try:
@@ -85,55 +80,58 @@ class ImageClassifierAgent(AIAgent):
                     image_bytes = f.read()
             else:
                 return None
-            
+
             # Open image with PIL
             image = Image.open(io.BytesIO(image_bytes))
-            
+
             # Convert to RGB if necessary
             if image.mode != 'RGB':
                 image = image.convert('RGB')
-            
+
             # Resize if too large
             if image.size[0] > self.max_image_size[0] or image.size[1] > self.max_image_size[1]:
                 image.thumbnail(self.max_image_size, Image.Resampling.LANCZOS)
-            
+
             # Convert back to bytes
             output_buffer = io.BytesIO()
             image.save(output_buffer, format='JPEG', quality=85)
             return output_buffer.getvalue()
-            
+
         except Exception as e:
             self.logger.error(f"Failed to preprocess image: {str(e)}")
             return None
-    
+
     async def _ai_image_analysis(self, image_data: bytes) -> Dict[str, Any]:
         """Perform AI-based image analysis using Blackbox AI vision"""
         try:
             # Encode image to base64
             image_base64 = base64.b64encode(image_data).decode('utf-8')
-            
+
             prompt = """
-            Analyze this image for harmful content that would be inappropriate for children. 
+            Analyze this image for harmful content that would be inappropriate for children.
             Look for these categories:
             - NSFW: Nudity, sexual content, or suggestive material
-            - VIOLENCE: Gore, weapons, fighting, or violent imagery  
+            - VIOLENCE: Gore, weapons, fighting, or violent imagery
             - WEAPONS: Guns, knives, or other dangerous weapons
+            - HATE_SYMBOLS: Hate symbols, racist imagery, or discriminatory content
+            - SELF_HARM: Content related to self-harm or suicide
+            - GROOMING: Content that could be used for predatory purposes
             - NONE: Safe, appropriate content
-            
+
             Respond with a JSON object containing:
             - risk_score: float between 0.0 and 1.0 (0.0 = completely safe, 1.0 = extremely harmful)
             - threats: list of detected threat categories from above
             - confidence: float between 0.0 and 1.0 indicating analysis confidence
             - explanation: brief description of what was detected
-            
+
             Example response:
             {"risk_score": 0.8, "threats": ["NSFW"], "confidence": 0.9, "explanation": "Image contains nudity"}
             """
-            
+
             payload = {
                 "messages": [
                     {
-                        "role": "user", 
+                        "role": "user",
                         "content": [
                             {"type": "text", "text": prompt},
                             {
@@ -145,24 +143,29 @@ class ImageClassifierAgent(AIAgent):
                         ]
                     }
                 ],
-                "model": "blackbox",
-                "temperature": config.model.reasoning_model_temperature
+                "model": "blackboxai/openai/gpt-4-vision",
+                "temperature": 0.1
             }
-            
+
+            headers = {
+                "Content-Type": "application/json",
+                "Authorization": f"Bearer {self.api_key}"
+            }
+
             async with aiohttp.ClientSession() as session:
                 async with session.post(
                     self.base_url,
-                    headers=self._prepare_api_headers(),
+                    headers=headers,
                     json=payload
                 ) as response:
                     if response.status == 200:
                         result = await response.json()
                         content = result.get('choices', [{}])[0].get('message', {}).get('content', '{}')
-                        
+
                         try:
                             # Parse JSON response
                             ai_result = json.loads(content)
-                            
+
                             # Convert threat strings to ThreatCategory enums
                             threats = []
                             for threat_str in ai_result.get('threats', []):
@@ -173,7 +176,13 @@ class ImageClassifierAgent(AIAgent):
                                     threats.append(ThreatCategory.VIOLENCE)
                                 elif threat_lower == 'weapons':
                                     threats.append(ThreatCategory.WEAPONS)
-                            
+                                elif threat_lower == 'hate_symbols':
+                                    threats.append(ThreatCategory.HATE_SPEECH)
+                                elif threat_lower == 'self_harm':
+                                    threats.append(ThreatCategory.SELF_HARM)
+                                elif threat_lower == 'grooming':
+                                    threats.append(ThreatCategory.GROOMING)
+
                             return {
                                 'risk_score': float(ai_result.get('risk_score', 0.0)),
                                 'threats': threats,
@@ -186,11 +195,11 @@ class ImageClassifierAgent(AIAgent):
                     else:
                         self.logger.error(f"AI image API request failed with status {response.status}")
                         return self._fallback_image_result()
-                        
+
         except Exception as e:
             self.logger.error(f"AI image analysis failed: {str(e)}")
             return self._fallback_image_result()
-    
+
     def _fallback_image_result(self) -> Dict[str, Any]:
         """Fallback result when AI image analysis fails"""
         return {
@@ -199,39 +208,39 @@ class ImageClassifierAgent(AIAgent):
             'confidence': 0.3,
             'explanation': 'AI image analysis unavailable, using conservative estimate'
         }
-    
+
     def _basic_image_checks(self, image_data: bytes) -> Dict[str, Any]:
         """Perform basic image validation checks"""
         try:
             image = Image.open(io.BytesIO(image_data))
-            
+
             # Basic checks
             width, height = image.size
             file_size = len(image_data)
-            
+
             # Very basic heuristics (not reliable for actual content detection)
             risk_score = 0.0
             threats = []
             explanation = "Basic image validation passed"
-            
+
             # Check for suspicious dimensions (very wide/tall images sometimes used for inappropriate content)
             aspect_ratio = max(width, height) / min(width, height)
             if aspect_ratio > 3.0:
                 risk_score += 0.1
                 explanation += ". Unusual aspect ratio detected"
-            
+
             # Check file size (very large images might contain hidden content)
             if file_size > 5 * 1024 * 1024:  # 5MB
                 risk_score += 0.1
                 explanation += ". Large file size detected"
-            
+
             return {
                 'risk_score': min(risk_score, 1.0),
                 'threats': threats,
                 'confidence': 0.6,
                 'explanation': explanation
             }
-            
+
         except Exception as e:
             return {
                 'risk_score': 0.3,
@@ -239,3 +248,36 @@ class ImageClassifierAgent(AIAgent):
                 'confidence': 0.4,
                 'explanation': f"Basic image check failed: {str(e)}"
             }
+
+    async def _fallback_analyze(self, message: InputMessage) -> AgentResult:
+        """Fallback analysis using basic image checks"""
+        try:
+            image_data = await self._load_and_preprocess_image(message)
+            if image_data:
+                basic_result = self._basic_image_checks(image_data)
+                return self._create_result(
+                    confidence=basic_result['confidence'],
+                    risk_score=basic_result['risk_score'],
+                    threats=basic_result['threats'],
+                    explanation=f"Fallback analysis: {basic_result['explanation']}",
+                    processing_time=0.0,
+                    metadata={'fallback': True}
+                )
+            else:
+                return self._create_result(
+                    confidence=0.3,
+                    risk_score=0.5,
+                    threats=[],
+                    explanation="Fallback analysis: Could not process image",
+                    processing_time=0.0,
+                    metadata={'fallback': True}
+                )
+        except Exception as e:
+            return self._create_result(
+                confidence=0.2,
+                risk_score=0.5,
+                threats=[],
+                explanation=f"Fallback analysis failed: {str(e)}",
+                processing_time=0.0,
+                metadata={'fallback': True}
+            )

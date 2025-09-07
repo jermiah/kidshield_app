@@ -53,11 +53,23 @@ class GuardianResponse(BaseModel):
                     "text_risk": [
                         {"category": "bullying", "score": 0.15},
                         {"category": "sexual", "score": 0.88},
-                        {"category": "self_harm", "score": 0.02}
+                        {"category": "self_harm", "score": 0.02},
+                        {"category": "sexual_solicitation", "score": 0.75},
+                        {"category": "hate_speech", "score": 0.05},
+                        {"category": "violence", "score": 0.03},
+                        {"category": "profanity", "score": 0.10},
+                        {"category": "grooming", "score": 0.01},
+                        {"category": "predatory", "score": 0.00},
+                        {"category": "csam", "score": 0.00}
+                        
                     ],
                     "image_risk": [
                         {"category": "nudity", "score": 0.91},
-                        {"category": "violence", "score": 0.03}
+                        {"category": "violence", "score": 0.03},
+                        {"category": "weapons", "score": 0.00},
+                        {"category": "self_harm", "score": 0.00},
+                        {"category": "inappropriate", "score": 0.05}
+                            
                     ]
                 },
                 "status": "flagged",
@@ -69,13 +81,15 @@ class GuardianResponse(BaseModel):
 # Standard risk categories mapping
 STANDARD_TEXT_CATEGORIES = [
     "bullying",
-    "sexual", 
+    "sexual",
     "self_harm",
     "hate_speech",
     "violence",
     "profanity",
     "grooming",
-    "predatory"
+    "predatory",
+    "sexual_solicitation",
+    "csam",  # optional, if you expose it
 ]
 
 STANDARD_IMAGE_CATEGORIES = [

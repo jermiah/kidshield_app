@@ -30,6 +30,8 @@ class ThreatCategory(Enum):
     PREDATORY = "predatory"
     CSAM = "csam"
     NONE = "none"
+    SEXUAL_SOLICITATION = "sexual_solicitation"
+
 
 @dataclass
 class InputMessage:

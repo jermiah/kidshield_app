@@ -29,14 +29,17 @@ class GuardianLayer:
         
         # Threat category to standard category mapping
         self.threat_to_text_category = {
-            ThreatCategory.PROFANITY: "profanity",
-            ThreatCategory.HATE_SPEECH: "hate_speech", 
-            ThreatCategory.GROOMING: "grooming",
-            ThreatCategory.SELF_HARM: "self_harm",
-            ThreatCategory.VIOLENCE: "violence",
-            ThreatCategory.PREDATORY: "predatory",
-            ThreatCategory.CSAM: "sexual"
-        }
+    ThreatCategory.PROFANITY: "profanity",
+    ThreatCategory.HATE_SPEECH: "hate_speech",
+    ThreatCategory.GROOMING: "grooming",
+    ThreatCategory.SELF_HARM: "self_harm",
+    ThreatCategory.VIOLENCE: "violence",
+    ThreatCategory.PREDATORY: "predatory",
+    ThreatCategory.CSAM: "csam",  # <- recommend using "csam" explicitly
+    ThreatCategory.NSFW: "sexual",  # optional: keep “sexual” as general adult/NSFW
+    # ✅ add this:
+    ThreatCategory.SEXUAL_SOLICITATION: "sexual_solicitation",
+}
         
         self.threat_to_image_category = {
             ThreatCategory.NSFW: "nudity",

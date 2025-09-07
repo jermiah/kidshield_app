@@ -18,6 +18,12 @@ class ReasoningAgent(AIAgent):
             confidence_threshold=0.8  # High confidence threshold for final decisions
         )
         self.base_url = config.model.blackbox_base_url
+
+        # NEW: pick enum for sexual solicitation; fallback to NSFW if not present
+        try:
+            self.SEX_SOL = ThreatCategory.SEXUAL_SOLICITATION
+        except AttributeError:
+            self.SEX_SOL = ThreatCategory.NSFW
     
     def can_process(self, message: InputMessage) -> bool:
         """This agent can process any type of content"""
@@ -159,7 +165,8 @@ class ReasoningAgent(AIAgent):
            - HATE_SPEECH: Discriminatory or hateful content
            - GROOMING: Predatory behavior targeting minors
            - SELF_HARM: Content promoting self-injury or suicide
-           - NSFW: Sexual or adult content
+           - SEXUAL_SOLICITATION: Requests for sexual content or images ("send nudes", "dick pic")
+           - NSFW: General adult sexual content (non-solicitation)
            - VIOLENCE: Violent or threatening content
            - WEAPONS: Dangerous weapons or violence promotion
            - PREDATORY: General predatory behavior
@@ -199,13 +206,13 @@ class ReasoningAgent(AIAgent):
     
     def _parse_threats(self, threat_strings: List[str]) -> List[ThreatCategory]:
         """Parse threat strings into ThreatCategory enums"""
-        threats = []
+        threats: List[ThreatCategory] = []
         for threat_str in threat_strings:
             try:
-                threat_lower = threat_str.lower()
+                threat_lower = (threat_str or "").strip().lower()
                 if threat_lower == 'profanity':
                     threats.append(ThreatCategory.PROFANITY)
-                elif threat_lower == 'hate_speech':
+                elif threat_lower == 'hate_speech' or threat_lower == 'hate':
                     threats.append(ThreatCategory.HATE_SPEECH)
                 elif threat_lower == 'grooming':
                     threats.append(ThreatCategory.GROOMING)
@@ -221,6 +228,9 @@ class ReasoningAgent(AIAgent):
                     threats.append(ThreatCategory.PREDATORY)
                 elif threat_lower == 'csam':
                     threats.append(ThreatCategory.CSAM)
+                elif threat_lower == 'sexual_solicitation':
+                    # NEW: map to SEXUAL_SOLICITATION if it exists, else to NSFW
+                    threats.append(ThreatCategory.SEXUAL_SOLICITATION)
             except ValueError:
                 continue
         return threats

@@ -1,5 +1,6 @@
 require('dotenv').config();
 const express = require('express');
+const path = require('path');
 const app = express();
 const axios = require('axios');
 
@@ -9,8 +10,82 @@ const WEBHOOK_VERIFY_TOKEN = process.env.WEBHOOK_VERIFY_TOKEN || 'kid-shield-tok
 
 app.use(express.json());
 
+// Serve static files from frontend directory
+app.use(express.static(path.join(__dirname, '../frontend')));
+
+// Serve the main app
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, '../frontend/index.html'));
+});
+
 // Health check
-app.get('/', (_req, res) => res.send('Hello, Thamim!'));
+app.get('/health', (_req, res) => res.send('KidShield Backend is running!'));
+
+// API endpoint for sending messages from frontend
+app.post('/api/send-message', async (req, res) => {
+  try {
+    const { to, message } = req.body;
+    
+    console.log('📤 Sending message to:', to, message);
+    
+    // Send via WhatsApp if configured
+    if (process.env.WHATSAPP_ACCESS_TOKEN && process.env.WHATSAPP_PHONE_NUMBER_ID) {
+      const result = await sendWhatsAppText(to, message);
+      console.log('✅ WhatsApp message sent:', result);
+    }
+    
+    res.json({ success: true, message: 'Message sent successfully' });
+  } catch (error) {
+    console.error('❌ Error sending message:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// API endpoint to get conversations (for frontend)
+app.get('/api/conversations', (req, res) => {
+  // In a real app, this would fetch from a database
+  const conversations = [
+    {
+      id: '919952072184',
+      name: 'Emma (Child)',
+      lastMessage: 'Hi mom, how are you?',
+      time: '2 min ago',
+      unread: 0,
+      status: 'safe'
+    },
+    {
+      id: '918765432109',
+      name: 'Unknown Contact',
+      lastMessage: 'Hey, want to be friends?',
+      time: '5 min ago',
+      unread: 1,
+      status: 'warning'
+    }
+  ];
+  
+  res.json(conversations);
+});
+
+// API endpoint to simulate receiving a message (for testing)
+app.post('/api/simulate-message', async (req, res) => {
+  try {
+    const { from, message } = req.body;
+    
+    console.log('🧪 Simulating message from:', from, message);
+    
+    // Analyze with Guardian Layer
+    const analysisResult = await analyzeMessageWithGuardian(message, from);
+    
+    res.json({
+      success: true,
+      message: 'Message processed',
+      analysis: analysisResult
+    });
+  } catch (error) {
+    console.error('❌ Error processing simulated message:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
 
 // Webhook verification (GET)
 app.get('/webhook', (req, res) => {
@@ -46,6 +121,105 @@ async function sendWhatsAppText(to, text) {
 
   const { data } = await axios.post(url, payload, { headers });
   return data;
+}
+
+async function analyzeMessageWithGuardian(messageText, userId) {
+  try {
+    console.log('🛡️ Analyzing message with Guardian Layer:', messageText);
+    
+    const response = await axios.post('http://localhost:8000/guardian/auto-analyze', {
+      content: messageText,
+      user_id: userId
+    });
+
+    console.log('📊 Guardian Analysis Result:', response.data);
+    return response.data;
+  } catch (error) {
+    console.error('❌ Error analyzing message with Guardian Layer:', error.message);
+    return null;
+  }
+}
+
+async function applyAgentActions(actionData, originalMessage, senderId) {
+  console.log('🤖 Applying agent actions:', actionData);
+  
+  if (!actionData || !actionData.data || !actionData.data.messages) {
+    return;
+  }
+
+  // Process each message from the agent layer
+  for (const msg of actionData.data.messages) {
+    console.log(`📧 Processing ${msg.recipient} message: ${msg.subject}`);
+    
+    try {
+      switch (msg.recipient) {
+        case 'parent':
+          // Send notification to parent
+          await sendParentNotification(msg, senderId);
+          break;
+          
+        case 'child':
+          // Send educational content to child
+          await sendChildEducation(msg, senderId);
+          break;
+          
+        case 'sender':
+          // Send warning to sender
+          await sendSenderWarning(msg, senderId);
+          break;
+      }
+    } catch (error) {
+      console.error(`❌ Error sending ${msg.recipient} message:`, error);
+    }
+  }
+}
+
+async function sendParentNotification(message, childId) {
+  console.log('👨‍👩‍👧 Sending parent notification:', message.subject);
+  
+  // In a real app, this would send email/SMS to parent
+  // For demo, we'll send a WhatsApp message if parent number is configured
+  const parentNumber = process.env.PARENT_PHONE_NUMBER;
+  
+  if (parentNumber && process.env.WHATSAPP_ACCESS_TOKEN) {
+    const notificationText = `🛡️ KIDSHIELD ALERT\n\n${message.subject}\n\n${message.message}`;
+    try {
+      await sendWhatsAppText(parentNumber, notificationText);
+      console.log('✅ Parent notification sent via WhatsApp');
+    } catch (error) {
+      console.error('❌ Failed to send parent notification:', error);
+    }
+  }
+}
+
+async function sendChildEducation(message, childId) {
+  console.log('📚 Sending child education:', message.subject);
+  
+  // Send educational content to the child
+  if (process.env.WHATSAPP_ACCESS_TOKEN) {
+    const educationText = `📚 ${message.subject}\n\n${message.message}`;
+    try {
+      await sendWhatsAppText(childId, educationText);
+      console.log('✅ Child education sent via WhatsApp');
+    } catch (error) {
+      console.error('❌ Failed to send child education:', error);
+    }
+  }
+}
+
+async function sendSenderWarning(message, senderId) {
+  console.log('⚠️ Sending sender warning:', message.subject);
+  
+  // Send warning to the sender
+  if (process.env.WHATSAPP_ACCESS_TOKEN) {
+    const warningText = `⚠️ ${message.subject}\n\n${message.message}`;
+    try {
+      await sendWhatsAppText(senderId, warningText);
+      console.log('✅ Sender warning sent via WhatsApp');
+    } catch (error) {
+      console.error('❌ Failed to send sender warning:', error);
+    }
+  }
 }
 
 app.get('/send-template', async (req, res) => {
@@ -137,30 +311,27 @@ app.post('/webhook', async (req, res) => {
       const text = msg.text?.body;
       console.log('✅ Received message:', { from, type, text, msg});
 
-      // Send message to Guardian Layer for analysis using simple format
+      // Analyze message with Guardian Layer and apply agent actions
       if (text) {
         try {
-          const guardianResponse = await axios.post('http://localhost:8000/guardian/auto-analyze', {
-            content: text,
-            user_id: from
-          });
+          const analysisResult = await analyzeMessageWithGuardian(text, from);
 
-          console.log('🛡️ Guardian Layer Analysis:', guardianResponse.data);
-
-          // Check if message is safe or contains threats
-          const analysisResult = guardianResponse.data.data;
-          if (analysisResult && analysisResult.status) {
-            if (analysisResult.status.value === 'safe') {
-              console.log('✅ Message is safe');
-              // Could send a confirmation or just log
+          if (analysisResult && analysisResult.success) {
+            const actionData = analysisResult.data;
+            
+            if (actionData.action_types && actionData.action_types.length > 0) {
+              console.log('⚠️ Suspicious message detected! Actions:', actionData.action_types);
+              
+              // Apply the actions determined by the agent layer
+              await applyAgentActions(analysisResult, text, from);
+              
+              console.log('✅ All safety actions have been applied');
             } else {
-              console.log('⚠️ Message contains threats:', analysisResult.status.value);
-              // Could send warning message or take action
-              await sendWhatsAppText(from, '⚠️ This message has been flagged for review by our safety system.');
+              console.log('✅ Message is safe - no actions needed');
             }
           }
         } catch (error) {
-          console.error('❌ Error analyzing message with Guardian Layer:', error.message);
+          console.error('❌ Error processing message:', error.message);
         }
       }
 

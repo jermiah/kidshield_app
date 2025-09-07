@@ -31,7 +31,7 @@ class ReasoningAgent(AIAgent):
             
             return self._create_result(
                 confidence=ai_result['confidence'],
-                risk_score=ai_result['risk_score'],
+                risk_score=ai_result['risk_score']
                 threats=ai_result['threats'],
                 explanation=ai_result['explanation'],
                 processing_time=0.0,

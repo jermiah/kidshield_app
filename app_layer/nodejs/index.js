@@ -133,7 +133,12 @@ async function analyzeMessageWithGuardian(messageText, userId) {
     });
 
     console.log('📊 Guardian Analysis Result:', response.data);
-    return response.data;
+    
+    // Return both the analysis result and the original message text for front-end display
+    return {
+      ...response.data,
+      messageText: messageText
+    };
   } catch (error) {
     console.error('❌ Error analyzing message with Guardian Layer:', error.message);
     return null;

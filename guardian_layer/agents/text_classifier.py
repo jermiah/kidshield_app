@@ -6,6 +6,7 @@ from typing import List, Dict, Any
 from .base_agent import AIAgent
 from ..models import InputMessage, AgentResult, ThreatCategory, ContentType
 from ..config import config
+import re
 
 class TextClassifierAgent(AIAgent):
     """Agent for classifying text content using Blackbox AI"""
@@ -90,7 +91,7 @@ class TextClassifierAgent(AIAgent):
         for threat_category, keywords in self.threat_keywords.items():
             category_matches = []
             for keyword in keywords:
-                if keyword in text_lower:
+                if re.search(rf"\b{re.escape(keyword)}\b", text_lower):
                     category_matches.append(keyword)
                     matches.append(keyword)
             

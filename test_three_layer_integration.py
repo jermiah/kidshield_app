@@ -30,7 +30,7 @@ def test_three_layer_integration():
         
         # Guardian Layer imports
         from guardian_layer.models import InputMessage, ThreatCategory
-        from guardian_layer.agents.text_classifier import TextClassifierAgent
+        from guardian_layer.agents.text_classifier_old import TextClassifierAgent
         from guardian_layer.agents.image_classifier import ImageClassifierAgent
         print("   ✅ Guardian Layer imports successful")
         

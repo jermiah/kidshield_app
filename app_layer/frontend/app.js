@@ -46,20 +46,20 @@ class KidShieldApp {
         // Load existing conversations (in real app, from API)
         const demoConversations = [
             {
-                id: '919952072184',
-                name: 'Emma (Child)',
-                lastMessage: 'Hi mom, how are you?',
-                time: '2 min ago',
+                id: 'child-contact',
+                name: '👧 Emma (Child)',
+                lastMessage: 'Hi mom!',
+                time: '30 min ago',
                 unread: 0,
                 status: 'safe'
             },
             {
-                id: '918765432109',
-                name: 'Unknown Contact',
-                lastMessage: 'Hey, want to be friends?',
-                time: '5 min ago',
-                unread: 1,
-                status: 'warning'
+                id: 'dad-contact',
+                name: '👨 Dad',
+                lastMessage: 'How was school today?',
+                time: '1 hour ago',
+                unread: 0,
+                status: 'safe'
             }
         ];
 
@@ -134,15 +134,26 @@ class KidShieldApp {
 
     createMessageElement(message) {
         const messageEl = document.createElement('div');
-        messageEl.className = `message ${message.type} ${message.flagged ? 'flagged' : ''}`;
+        messageEl.className = `message ${message.type} ${message.flagged ? 'flagged' : ''} ${message.messageClass || ''}`;
 
         const bubble = document.createElement('div');
         bubble.className = 'message-bubble';
 
-        bubble.innerHTML = `
-            <div class="message-text">${message.text}</div>
-            <div class="message-time">${message.time}</div>
-        `;
+        // Handle system messages differently
+        if (message.type === 'system') {
+            bubble.innerHTML = `
+                <div class="message-text">
+                    <strong>${message.text}</strong>
+                    ${message.fullContent ? `<div class="system-message-content">${message.fullContent}</div>` : ''}
+                </div>
+                <div class="message-time">${message.time}</div>
+            `;
+        } else {
+            bubble.innerHTML = `
+                <div class="message-text">${message.text}</div>
+                <div class="message-time">${message.time}</div>
+            `;
+        }
 
         messageEl.appendChild(bubble);
 
@@ -263,19 +274,19 @@ class KidShieldApp {
 
     async analyzeMessage(messageText, senderId) {
         try {
-            const response = await fetch('http://localhost:8000/guardian/auto-analyze', {
+            const response = await fetch('/api/simulate-message', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    content: messageText,
-                    user_id: senderId
+                    from: senderId,
+                    message: messageText
                 })
             });
 
             const result = await response.json();
-            return result;
+            return result.analysis;
 
         } catch (error) {
             console.error('❌ Error analyzing message:', error);
@@ -289,10 +300,13 @@ class KidShieldApp {
         // Add message to conversation
         let conv = this.conversations.get(senderId);
         if (!conv) {
-            // Create new conversation
+            // Create new conversation with a fake name
+            const fakeNames = ['Alex Johnson', 'Sam Wilson', 'Jordan Smith', 'Casey Brown', 'Taylor Davis', 'Morgan Lee'];
+            const randomName = fakeNames[Math.floor(Math.random() * fakeNames.length)];
+            
             conv = {
                 id: senderId,
-                name: `Contact ${senderId.slice(-4)}`,
+                name: randomName,
                 lastMessage: messageText,
                 time: 'now',
                 unread: 1,
@@ -321,6 +335,7 @@ class KidShieldApp {
                 // Message was flagged
                 message.flagged = true;
                 message.actions = analysis.data;
+                message.originalText = analysis.messageText; // Store original message text
                 conv.status = 'warning';
 
                 // Show notification
@@ -329,8 +344,9 @@ class KidShieldApp {
                     `Suspicious message detected from ${conv.name}. Safety actions have been taken.`
                 );
 
-                // Apply actions
+                // Apply actions and show automated responses
                 this.applyActions(analysis.data, senderId);
+                this.displayAutomatedResponses(analysis.data, senderId);
             }
 
             // Update UI
@@ -365,6 +381,89 @@ class KidShieldApp {
         });
     }
 
+    displayAutomatedResponses(actionData, senderId) {
+        console.log('📱 Displaying automated responses:', actionData);
+
+        // Display each automated message in the appropriate conversation
+        actionData.messages.forEach((msg, index) => {
+            setTimeout(() => {
+                let targetConversationId = senderId;
+                let messagePrefix = '';
+                let messageClass = 'system-message';
+
+                switch (msg.recipient) {
+                    case 'child':
+                        // Show educational message in child's conversation (Emma)
+                        targetConversationId = 'child-contact';
+                        messagePrefix = '📚 Educational Content: ';
+                        messageClass = 'system-message child-education';
+                        break;
+                    case 'parent':
+                        // Send alert to Dad's conversation
+                        targetConversationId = 'dad-contact';
+                        messagePrefix = '🛡️ Safety Alert: ';
+                        messageClass = 'system-message parent-notification';
+                        break;
+                    case 'sender':
+                        // Show warning in sender's conversation
+                        targetConversationId = senderId;
+                        messagePrefix = '⚠️ Warning: ';
+                        messageClass = 'system-message sender-warning';
+                        break;
+                }
+
+                this.addSystemMessage(targetConversationId, messagePrefix + msg.subject, msg.message, messageClass);
+            }, (index + 1) * 1500); // Stagger the messages
+        });
+    }
+
+    ensureParentConversation() {
+        const parentId = 'parent-notifications';
+        if (!this.conversations.has(parentId)) {
+            const parentConv = {
+                id: parentId,
+                name: '👨‍👩‍👧 Parent Notifications',
+                lastMessage: 'Safety notifications will appear here',
+                time: 'now',
+                unread: 0,
+                status: 'safe',
+                messages: []
+            };
+            this.conversations.set(parentId, parentConv);
+            this.renderConversations();
+        }
+    }
+
+    addSystemMessage(conversationId, subject, content, messageClass = 'system-message') {
+        const conv = this.conversations.get(conversationId);
+        if (!conv) return;
+
+        const systemMessage = {
+            id: Date.now() + Math.random(),
+            text: subject,
+            fullContent: content,
+            type: 'system',
+            time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
+            flagged: false,
+            messageClass: messageClass
+        };
+
+        conv.messages.push(systemMessage);
+        conv.lastMessage = subject;
+        conv.time = 'now';
+        
+        // Add unread count if not currently viewing this conversation
+        if (this.currentConversation !== conversationId) {
+            conv.unread++;
+        }
+
+        // Update UI
+        this.renderConversations();
+        if (this.currentConversation === conversationId) {
+            this.renderMessages();
+        }
+    }
+
     showNotification(title, message) {
         const panel = document.getElementById('notificationPanel');
         const titleEl = document.getElementById('notificationTitle');
@@ -383,17 +482,8 @@ class KidShieldApp {
 
     simulateIncomingMessages() {
         // Simulate receiving messages for demo purposes
-        const demoMessages = [
-            { from: '918765432109', text: 'Hey, want to be friends?', delay: 3000 },
-            { from: '918765432109', text: 'Can you send me a photo of yourself?', delay: 8000 },
-            { from: '919952072184', text: 'Mom, someone is bothering me online', delay: 15000 }
-        ];
-
-        demoMessages.forEach(msg => {
-            setTimeout(() => {
-                this.receiveMessage(msg.from, msg.text);
-            }, msg.delay);
-        });
+        // For now, we'll keep this empty and let messages come through the webhook or manual testing
+        console.log('📱 Ready to receive messages...');
     }
 }
 
@@ -407,5 +497,87 @@ document.addEventListener('DOMContentLoaded', () => {
 window.testReceiveMessage = (from, text) => {
     if (window.kidShieldApp) {
         window.kidShieldApp.receiveMessage(from, text);
+    }
+};
+
+// Test function to simulate a suspicious message sent to the child using real response format
+window.testSuspiciousMessage = () => {
+    if (window.kidShieldApp) {
+        // First, add the suspicious message to the child's conversation
+        const childConv = window.kidShieldApp.conversations.get('child-contact');
+        if (childConv) {
+            const suspiciousMessage = {
+                id: Date.now(),
+                text: 'Hey, want to be friends? Can you send me a photo of yourself?',
+                type: 'received',
+                time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
+                flagged: false
+            };
+            
+            childConv.messages.push(suspiciousMessage);
+            childConv.lastMessage = suspiciousMessage.text;
+            childConv.time = 'now';
+            childConv.unread++;
+            
+            // Simulate the actual response from analyzeMessageWithGuardian
+            const mockAnalysis = {
+                success: true,
+                data: {
+                    action_types: ["notify_parent", "educate_child", "warn_sender", "provide_resources"],
+                    messages: [
+                        {
+                            recipient: "parent",
+                            subject: "** Important Update: Low-Level Digital Safety Concern Involving Your Child",
+                            message: "Dear Parent or Guardian,\n\nWe want to inform you about a recent digital safety incident involving your child. While the situation is considered low in severity, we believe it's important to keep you informed.\n\nOur monitoring systems identified an interaction or activity online that did not follow our digital safety guidelines. Although this was not a serious threat, it's a reminder of the importance of staying alert to online behavior.\n\nAt this time, no further action is needed from your child. We have documented the incident and are notifying you as part of our commitment to transparency and student safety.\n\nWe encourage you to talk with your child about safe and respectful online behavior. If you have any questions or would like guidance on how to start this conversation, please don't hesitate to reach out.\n\nThank you for your continued partnership in keeping our students safe online.\n\nSincerely,\n[Your Name]\n[Your Title/Organization]\n[Contact Information]",
+                            tone: "informative"
+                        },
+                        {
+                            recipient: "child",
+                            subject: "** You're Not Alone — Let's Stay Safe Together Online",
+                            message: "Hi there,\n\nWe're really proud of you for speaking up. What happened online wasn't your fault, and you didn't do anything wrong. Sometimes things happen that make us feel uncomfortable or unsure, and it's okay to ask for help.\n\nOne simple way to stay safe online is to never share personal information, like your full name, school, or address, with people you don't know in real life.\n\nRemember, you're not alone. Talk to a trusted adult—like a parent, teacher, or school counselor—about what happened. They care about you and want to help.\n\nYou're strong, and you're doing the right thing.\n\nTake care!",
+                            tone: "supportive"
+                        },
+                        {
+                            recipient: "sender",
+                            subject: "** Warning: Inappropriate Content Sent to a Minor – Policy Violation (Threat Classification: Other, Severity: Low)",
+                            message: "Dear User,\n\nWe are issuing this formal warning regarding a recent violation of our platform's safety policies on guardian_api. Our monitoring systems have detected that you sent inappropriate content to a child user. This behavior has been classified under the \"Other\" threat category and is currently assessed at a **Low Severity Level**. However, any interaction of this nature is taken seriously due to the potential risk it poses to vulnerable users, especially minors.\n\nSending inappropriate content to children is strictly prohibited under our Community Guidelines and may also violate applicable child protection laws. Such actions undermine the safe environment we are committed to maintaining and can contribute to emotional or psychological harm to young users.\n\nWhile the current severity level is low, repeated or escalated behavior may result in more serious consequences, including temporary suspension or permanent removal from the platform, and in some cases, referral to legal authorities.\n\nWe urge you to immediately cease all inappropriate interactions with minors and to review our Community Guidelines to ensure full compliance moving forward. Our platform is designed to protect vulnerable users, and we expect all members to uphold these standards.\n\nIf you believe this warning was issued in error, you may contact our Safety Team for further review. However, continued violations will not be tolerated.\n\nThank you for your immediate attention to this matter.\n\nSincerely,\nGuardian_API Safety Enforcement Team",
+                            tone: "firm"
+                        }
+                    ],
+                    message_id: "f2ba4b3a-b8d8-4963-8eb7-e208ffc3ad68",
+                    followup_required: true
+                },
+                messageText: suspiciousMessage.text
+            };
+            
+            // Process the flagged message
+            suspiciousMessage.flagged = true;
+            suspiciousMessage.actions = mockAnalysis.data;
+            suspiciousMessage.originalText = mockAnalysis.messageText;
+            childConv.status = 'warning';
+
+            // Show notification
+            window.kidShieldApp.showNotification(
+                '🛡️ Safety Alert',
+                'Suspicious message detected in Emma\'s conversation. Safety actions have been taken.'
+            );
+
+            // Apply actions and show automated responses
+            window.kidShieldApp.applyActions(mockAnalysis.data, '918765432109');
+            window.kidShieldApp.displayAutomatedResponses(mockAnalysis.data, '918765432109');
+            
+            // Update UI immediately
+            window.kidShieldApp.renderConversations();
+            if (window.kidShieldApp.currentConversation === 'child-contact') {
+                window.kidShieldApp.renderMessages();
+            }
+        }
+    }
+};
+
+// Test function to simulate receiving a message from an unknown sender
+window.testUnknownSender = () => {
+    if (window.kidShieldApp) {
+        window.kidShieldApp.receiveMessage('918765432109', 'Hey, want to be friends? Can you send me a photo of yourself?');
     }
 };

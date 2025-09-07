@@ -70,8 +70,8 @@ ai_agent_system/
 
 1. Clone the repository:
 ```bash
-git clone <repository-url>
-cd ai_agent_system
+git clone https://github.com/jermiah/kidshield_app.git
+cd kidshield_app
 ```
 
 2. Install dependencies:
@@ -84,17 +84,21 @@ pip install -r requirements.txt
 3. Set up your BlackBox API key:
 ```bash
 # Create .env file with your API key
+touch .env
 echo "BLACKBOX_API_KEY=your_api_key_here" > .env
 ```
 
-4. Run the basic example:
+4. Run fastapi server:
 ```bash
-python examples/basic_usage.py
+cd guardian_layer/api
+fastapi run guardian_api.py
 ```
 
-5. Test LLM integration:
+5. Run nodejs server to connect to WhatsApp
 ```bash
-python examples/llm_enhanced_usage.py
+cd app_layer/nodejs
+npm i
+npm run dev
 ```
 
 ### Basic Usage

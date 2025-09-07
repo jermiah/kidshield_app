@@ -5,7 +5,7 @@ Coordinates decision-making and communication generation
 
 import logging
 from typing import Dict, List, Any
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from ..models.message import SuspiciousMessage
 from ..models.actions import ActionPlan, ActionDecision, CommunicationContent
@@ -122,12 +122,12 @@ class AIAgent:
             # Follow up in 3 days for high-risk situations
             followup_date = datetime.now().replace(
                 hour=10, minute=0, second=0, microsecond=0
-            ) + datetime.timedelta(days=3)
+            ) + timedelta(days=3)
         else:
             # Follow up in 1 week for lower-risk situations
             followup_date = datetime.now().replace(
                 hour=10, minute=0, second=0, microsecond=0
-            ) + datetime.timedelta(weeks=1)
+            ) + timedelta(weeks=1)
         
         return True, followup_date
     

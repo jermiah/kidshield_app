@@ -8,7 +8,7 @@ from datetime import datetime
 from typing import Union
 
 from ..schemas.guardian_schemas import GuardianRequest, GuardianResponse
-from ..schemas.api_schemas import APIResponse, ErrorResponse, HealthResponse
+from ..schemas.api_schemas import APIResponse, ErrorResponse, HealthResponse, EnhancedAPIResponse
 from ..schemas.simple_schemas import ContentRequest, SimpleRequest
 from ..guardian_layer import guardian_layer
 from ..utils import logger
@@ -351,7 +351,7 @@ async def analyze_content_simple(request: ContentRequest):
             detail=f"Content analysis failed: {str(e)}"
         )
 
-@app.post("/guardian/auto-analyze", response_model=APIResponse)
+@app.post("/guardian/auto-analyze", response_model=EnhancedAPIResponse)
 async def auto_analyze_content(request: SimpleRequest):
     """
     Endpoint ultra-simplifié avec détection automatique du type
@@ -361,6 +361,7 @@ async def auto_analyze_content(request: SimpleRequest):
     - user_id: optionnel
     
     Détecte automatiquement si c'est du texte ou une image base64
+    Si des risques sont détectés, passe les résultats à l'agent layer pour prise de décision
     """
     try:
         print("----------------------------------------------------------------")
@@ -383,11 +384,94 @@ async def auto_analyze_content(request: SimpleRequest):
                 detail="Unable to determine content type. Please use explicit endpoint."
             )
         
-        return APIResponse(
-            success=True,
-            data=result,
-            message=message
-        )
+        # Check if there are any risks detected
+        text_risks = result.results.text_risk if result.results.text_risk else []
+        image_risks = result.results.image_risk if result.results.image_risk else []
+        
+        # If no risks detected, return early and wait for another message
+        if not text_risks and not image_risks:
+            logger.info(f"No risks detected for message {result.input_id}. Returning safe status.")
+            return EnhancedAPIResponse(
+                success=True,
+                data={
+                    "guardian_analysis": result.dict(),
+                    "agent_processing": {
+                        "triggered": False,
+                        "message_id": None,
+                        "actions_planned": 0,
+                        "action_types": [],
+                        "followup_required": False,
+                        "followup_date": None
+                    }
+                },
+                message=f"{message} - No risks detected"
+            )
+        
+        # If risks are detected, pass to agent layer for decision-making
+        logger.info(f"Risks detected for message {result.input_id}. Triggering agent layer processing.")
+        
+        try:
+            # Import agent layer components
+            import sys
+            from pathlib import Path
+            agent_path = Path(__file__).parent.parent.parent / "agent_layer"
+            if str(agent_path) not in sys.path:
+                sys.path.append(str(agent_path))
+            
+            from agent_layer.integrations.guardian_integration import GuardianIntegration
+            from agent_layer.agents.ai_agent import AIAgent
+            
+            # Convert Guardian response to SuspiciousMessage format
+            integration = GuardianIntegration()
+            suspicious_message = integration.convert_guardian_response(
+                guardian_response=result,
+                original_content=request.content,
+                additional_metadata={
+                    "user_id": request.user_id,
+                    "content_type": content_type,
+                    "platform": "guardian_api",
+                    "sender_type": "unknown"
+                }
+            )
+            
+            # Process with AI Agent
+            ai_agent = AIAgent(use_llm=True)
+            action_plan = ai_agent.process_suspicious_message(suspicious_message)
+            
+            logger.info(f"Agent processing completed for message {result.input_id}. Generated {len(action_plan.decisions)} actions.")
+            
+            # Return response indicating agent processing was triggered
+            return EnhancedAPIResponse(
+                success=True,
+                data={
+                    "guardian_analysis": result.dict(),
+                    "agent_processing": {
+                        "triggered": True,
+                        "message_id": suspicious_message.message_id,
+                        "actions_planned": len(action_plan.decisions),
+                        "action_types": [d.action_type.value for d in action_plan.decisions],
+                        "followup_required": action_plan.followup_required,
+                        "followup_date": action_plan.followup_date.isoformat() if action_plan.followup_date else None,
+                        "action_plan": action_plan.to_dict()
+                    }
+                },
+                message=f"{message} - Risks detected, agent actions initiated"
+            )
+            
+        except Exception as agent_error:
+            logger.error(f"Agent layer processing failed: {str(agent_error)}")
+            # Return Guardian results even if agent processing fails
+            return EnhancedAPIResponse(
+                success=True,
+                data={
+                    "guardian_analysis": result.dict(),
+                    "agent_processing": {
+                        "triggered": False,
+                        "error": str(agent_error)
+                    }
+                },
+                message=f"{message} - Risks detected, but agent processing failed"
+            )
         
     except HTTPException:
         raise

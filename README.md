@@ -6,7 +6,7 @@ A comprehensive three-layer AI system designed to protect children online throug
 
 This system receives incoming messages that have already been classified as suspicious and focuses on:
 
-- **Detects Threats**: Uses advanced LLM models to analyze text and images for potential dangers
+- **Detects Threats**: Uses advanced agents to analyze text and images for potential dangers
 - **Makes Smart Decisions**: AI-enhanced decision engine determines appropriate protective actions
 - **Coordinates Responses**: Manages communications with parents, children, and relevant authorities
 - **Provides Education**: Delivers age-appropriate safety resources and guidance

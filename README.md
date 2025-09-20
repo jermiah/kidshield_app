@@ -22,7 +22,7 @@ KidShield implements a clean three-layer architecture for maximum modularity and
 │  User Interfaces • APIs • Authentication • Dashboards      │
 ├─────────────────────────────────────────────────────────────┤
 │                    GUARDIAN LAYER                           │
-│  LLM Analysis • Threat Detection • Content Classification  │
+│  Agent Analysis • Threat Detection • Content Classification  │
 ├─────────────────────────────────────────────────────────────┤
 │                     AGENT LAYER                             │
 │  Decision Making • Communication • Action Coordination     │
